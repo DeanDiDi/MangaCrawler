@@ -1,39 +1,47 @@
+# http://effbot.org/tkinterbook/tkinter-index.htm - An Introduction To Tkinter
 from tkinter import *
-from tkinter import ttk
+from functions import *
+import os
 
 
-def calculate(*args):
-    try:
-        value = float(feet.get())
-        meters.set((0.3048 * value * 10000.0 + 0.5)/10000.0)
-    except ValueError:
-        pass
+def start_crawl(event):
+    name = mangaNameEntry.get()
+    url = urlEntry.get()
+    chapters = get_chapters(url)      # a dictionary contains "title : url" pairs
+    chapter_index = 1
+    max_chapter = int(chaptersEntry.get())
+
+    while chapter_index <= max_chapter and chapter_index <= len(chapters):
+        title, chapter_url = chapters.popitem()
+        print("Crawling " + title + "   ...", end='    ')
+        title = title.replace(':', '-')      # replace ':' to '-'
+        path = name + "\\" + title
+        os.makedirs(path)    # using title to make a directory
+        image_urls = get_images(chapter_url)
+        index = 1
+        for image_url in image_urls:
+            download_file(image_url, path + '\\' + str(index) + '.jpg')  # postfix jpg
+            index += 1
+        chapter_index += 1
+        print(title + " finished.")
 
 
-root = Tk()
-root.title('Manga Crawler')
+root = Tk(className=" Manga Crawler")
 
-mainframe = ttk.Frame(root, padding = '3 3 12 12')
-mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
-mainframe.columnconfigure(0, weight=1)
-mainframe.rowconfigure(0, weight=1)
+Label(root, text="Manga Name:").grid(row=0, column=0, sticky=E)
+mangaNameEntry = Entry(root, width=50)
+mangaNameEntry.grid(row=0, column=1, sticky=W)
 
-feet = StringVar()
-meters = StringVar()
+Label(root, text="URL:").grid(row=1, column=0, sticky=E)
+urlEntry = Entry(root, width=50)
+urlEntry.grid(row=1, column=1, sticky=W)
 
-feet_entry = ttk.Entry(mainframe, width=7, textvariable=feet)
-feet_entry.grid(column=2, row=1, sticky=(W, E))
+Label(root, text="How Many Chapters:").grid(row=2, column=0, sticky=E)
+chaptersEntry = Entry(root, width=50)
+chaptersEntry.grid(row=2, column=1, sticky=W)
 
-ttk.Label(mainframe, textvariable=meters).grid(column=2, row=2, sticky=(W, E))
-ttk.Button(mainframe, text="Calculate", command=calculate).grid(column=3, row=3, sticky=W)
-
-ttk.Label(mainframe, text="feet").grid(column=3, row=1, sticky=W)
-ttk.Label(mainframe, text="is equivalent to").grid(column=1, row=2, sticky=E)
-ttk.Label(mainframe, text="meters").grid(column=3, row=2, sticky=W)
-
-for child in mainframe.winfo_children(): child.grid_configure(padx=5, pady=5)
-
-feet_entry.focus()
-root.bind('<Return>', calculate)
+crawlButton = Button(root, text="Crawl")
+crawlButton.grid(row=3, columnspan=2)
+crawlButton.bind("<Button-1>", start_crawl)
 
 root.mainloop()
